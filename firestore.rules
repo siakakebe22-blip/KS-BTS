@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+    }
+
+    // Profils : chaque membre lit son propre profil ; seul l'administrateur
+    // peut gérer les profils des autres utilisateurs.
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Les collections métier restent fermées jusqu'à la mise en place
+    // des règles par rôle et par chantier dans la prochaine phase.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
