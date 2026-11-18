@@ -73,7 +73,7 @@
         <div class="panel" style="margin:10px 0">
           <h3>Informations d'achat et de stockage</h3>
           <div class="form-grid">
-            <label>Quantité reçue<input id="voucherQuantity" type="number" min="0.01" step="0.01" value="1" required></label>
+            
             <label>Date d'achat<input id="purchaseDate" type="date" required></label>
             <label>Fournisseur<input id="purchaseSupplier" maxlength="120" placeholder="Nom du fournisseur"></label>
             <label>Référence facture / reçu<input id="purchaseInvoice" maxlength="80" placeholder="N° facture"></label>
@@ -84,9 +84,9 @@
         </div>
       </div>
       <div id="standardVoucherExtra" class="form-grid">
-        <label id="voucherSiteLabel">Chantier destinataire<select id="voucherSite"></select></label>
-        <label>Quantité<input id="voucherQuantity" type="number" min="0.01" step="0.01" value="1" required></label>
+        <label><span id="voucherSiteLabel">Chantier destinataire</span><select id="voucherSite"></select></label>
       </div>
+      <label>Quantité<input id="voucherQuantity" type="number" min="0.01" step="0.01" value="1" required></label>
       <label>Responsable / bénéficiaire<input id="voucherRecipient" maxlength="100" placeholder="Nom du responsable"></label>
       <label>Observation<textarea id="voucherNote" rows="3" maxlength="500" placeholder="Détail ou motif du mouvement"></textarea></label>
       <div class="dialog-actions"><button type="button" class="button secondary" id="cancelVoucher">Annuler</button><button type="submit" class="button primary">Valider et imprimer le bon</button></div>
