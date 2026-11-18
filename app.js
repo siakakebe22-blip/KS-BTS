@@ -3,6 +3,7 @@ const CATEGORIES=["Maçonnerie","Électricité","Soudure","Peinture","Plomberie"
 const initial={company:"KS BTP",currency:"GNF",threshold:2,materials:[],sites:[],movements:[],maintenance:[],documents:[]};
 let db=load();
 let currentPage="dashboard";
+let userProfiles=[];
 const $=s=>document.querySelector(s);
 function load(){try{return {...initial,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...initial}}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));}
@@ -12,8 +13,8 @@ function date(v){return new Date(v).toLocaleDateString("fr-FR")}
 function id(){return "K"+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase()}
 function stockAt(item,location){return (Number(item.quantity)||0)}
 function totalStock(){return db.materials.reduce((s,m)=>s+Number(m.quantity||0),0)}
-function go(page){currentPage=page;document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.page===page));$("#pageTitle").textContent=({dashboard:"Tableau de bord",materials:"Gestion des matériels",sites:"Gestion des chantiers",movements:"Mouvements de stock",maintenance:"Maintenance",reports:"Rapports",settings:"Paramètres",documents:"Bons de stock"})[page];render();$("#sidebar").classList.remove("open")}
-function render(){const target=$("#pageContent");({dashboard:dashboard,materials:materialsPage,sites:sitesPage,movements:movementsPage,documents:documentsPage,maintenance:maintenancePage,reports:reportsPage,settings:settingsPage}[currentPage]||dashboard)(target)}
+function go(page){currentPage=page;document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.page===page));$("#pageTitle").textContent=({dashboard:"Tableau de bord",materials:"Gestion des matériels",sites:"Gestion des chantiers",movements:"Mouvements de stock",maintenance:"Maintenance",reports:"Rapports",settings:"Paramètres",documents:"Bons de stock",users:"Gestion des utilisateurs"})[page];render();$("#sidebar").classList.remove("open")}
+function render(){const target=$("#pageContent");({dashboard:dashboard,materials:materialsPage,sites:sitesPage,movements:movementsPage,documents:documentsPage,maintenance:maintenancePage,reports:reportsPage,settings:settingsPage,users:usersPage}[currentPage]||dashboard)(target)}
 function dashboard(el){const low=db.materials.filter(m=>Number(m.quantity)<=Number(m.threshold||db.threshold));el.innerHTML=`<div class="welcome"><div><h2>Bienvenue dans KS BTP</h2><p>Suivez vos matériels du magasin central jusqu'aux chantiers.</p></div><div class="quick-actions"><button class="button primary" data-action="add-material">＋ Nouveau matériel</button><button class="button secondary" data-action="open-voucher" data-type="Sortie">Bon de sortie</button><button class="button secondary" data-action="open-voucher" data-type="Réception">Bon de réception</button><button class="button secondary" data-action="open-voucher" data-type="Retour">Bon de retour</button></div></div><div class="stats-grid"><article class="stat-card"><div class="stat-label">Matériels référencés</div><div class="stat-value">${db.materials.length}</div><div class="stat-note">Articles dans l'inventaire</div></article><article class="stat-card"><div class="stat-label">Stock total</div><div class="stat-value">${totalStock().toLocaleString("fr-FR")}</div><div class="stat-note">Quantités enregistrées</div></article><article class="stat-card"><div class="stat-label">Chantiers actifs</div><div class="stat-value">${db.sites.filter(s=>s.status!=="Clôturé").length}</div><div class="stat-note">Sites suivis</div></article><article class="stat-card"><div class="stat-label">Alertes de stock</div><div class="stat-value">${low.length}</div><div class="stat-note">Sous le seuil minimum</div></article></div><div class="panel-grid"><section class="panel"><div class="panel-head"><h3>Alertes de stock</h3><span class="tag ${low.length?"low":"good"}">${low.length} alerte(s)</span></div>${low.length?low.slice(0,6).map(m=>`<div class="list-row"><div><strong>${esc(m.name)}</strong><span class="muted">${esc(m.category)} · Seuil : ${m.threshold}</span></div><span class="tag low">${m.quantity} ${esc(m.unit)}</span></div>`).join(""):'<div class="empty-state">Aucune alerte de stock pour le moment.</div>'}</section><section class="panel"><h3>Derniers mouvements</h3>${db.movements.slice(-5).reverse().map(m=>`<div class="list-row"><div><strong>${esc(m.type)} · ${esc(m.materialName)}</strong><span class="muted">${esc(m.location)} · ${date(m.date)}</span></div><span class="kpi">${m.quantity}</span></div>`).join("")||'<div class="empty-state">Aucun mouvement enregistré.</div>'}</section></div>`}
 function materialsPage(el){el.innerHTML=`<div class="welcome"><div><h2>Inventaire des matériels</h2><p>Référencez les équipements réutilisables et les consommables.</p></div><button class="button primary" data-action="add-material">＋ Ajouter un matériel</button></div><div class="toolbar"><input class="search" id="materialSearch" placeholder="Rechercher par nom ou référence…"><select class="select-filter" id="categoryFilter"><option value="">Toutes les catégories</option>${CATEGORIES.map(c=>`<option>${c}</option>`).join("")}</select></div><div class="table-wrap"><table><thead><tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type</th><th>Quantité</th><th>Emplacement</th><th>Actions</th></tr></thead><tbody id="materialRows"></tbody></table></div>`;drawMaterials();$("#materialSearch").addEventListener("input",drawMaterials);$("#categoryFilter").addEventListener("change",drawMaterials)}
 function drawMaterials(){const q=($("#materialSearch")?.value||"").toLowerCase(),cat=$("#categoryFilter")?.value||"";const rows=db.materials.filter(m=>(m.name+" "+m.ref).toLowerCase().includes(q)&&(!cat||m.category===cat));$("#materialRows").innerHTML=rows.map(m=>`<tr><td><strong>${esc(m.ref)}</strong></td><td>${esc(m.name)}</td><td>${esc(m.category)}</td><td>${m.type==="consumable"?"Consommable":"Réutilisable"}</td><td><span class="tag ${Number(m.quantity)<=Number(m.threshold)?"low":"good"}">${m.quantity} ${esc(m.unit)}</span></td><td>${esc(m.location==="central"?"Magasin central":(db.sites.find(s=>s.id===m.location)?.name||"Magasin central"))}</td><td><div class="action-group"><button class="small-button" data-action="edit-material" data-id="${m.id}">Modifier</button><button class="small-button" data-action="delete-material" data-id="${m.id}">Supprimer</button></div></td></tr>`).join("")||'<tr><td colspan="7" class="empty-state">Aucun matériel trouvé.</td></tr>'}
@@ -88,13 +89,117 @@ function submitVoucher(e){
 }
 function maintenancePage(el){el.innerHTML=`<div class="welcome"><div><h2>Maintenance et réparations</h2><p>Consignez les pannes, interventions et coûts de réparation.</p></div><button class="button primary" data-action="add-maintenance">＋ Déclarer une intervention</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Matériel</th><th>Problème / intervention</th><th>Coût</th><th>Statut</th></tr></thead><tbody>${db.maintenance.slice().reverse().map(m=>`<tr><td>${date(m.date)}</td><td>${esc(m.materialName)}</td><td>${esc(m.description)}</td><td>${money(m.cost)}</td><td><span class="tag">${esc(m.status)}</span></td></tr>`).join("")||'<tr><td colspan="5" class="empty-state">Aucune intervention enregistrée.</td></tr>'}</tbody></table></div>`}
 function reportsPage(el){el.innerHTML=`<div class="welcome"><div><h2>Rapports et exports</h2><p>Consultez les données enregistrées sur cet appareil.</p></div><div class="quick-actions"><button class="button secondary" data-action="export-csv">Exporter matériels (CSV)</button><button class="button primary" data-action="backup">Sauvegarder les données</button></div></div><div class="stats-grid"><article class="stat-card"><div class="stat-label">Matériels</div><div class="stat-value">${db.materials.length}</div></article><article class="stat-card"><div class="stat-label">Chantiers</div><div class="stat-value">${db.sites.length}</div></article><article class="stat-card"><div class="stat-label">Mouvements</div><div class="stat-value">${db.movements.length}</div></article><article class="stat-card"><div class="stat-label">Interventions</div><div class="stat-value">${db.maintenance.length}</div></article></div><div class="panel"><h3>Répartition par catégorie</h3><div class="category-list">${CATEGORIES.map(c=>`<span class="tag">${c} : ${db.materials.filter(m=>m.category===c).length}</span>`).join("")}</div></div><div class="panel" style="margin-top:15px"><h3>Restaurer une sauvegarde</h3><p class="muted">Le fichier JSON remplace les données locales actuelles. Faites une sauvegarde avant toute restauration.</p><input type="file" id="restoreFile" accept="application/json"></div>`}
+
+async function usersPage(el){
+  if(window.ksCurrentUser?.role!=="admin"){
+    el.innerHTML='<div class="notice">Accès réservé à l’administrateur.</div>';
+    return;
+  }
+  el.innerHTML=`<div class="welcome"><div><h2>Comptes du personnel</h2><p>Créez les accès individuels et gérez leur activation.</p></div></div>
+  <section class="panel" style="margin-bottom:16px">
+    <h3>＋ Créer un compte</h3>
+    <form id="staffCreateForm" class="settings-grid">
+      <label>Nom et prénom<input id="staffName" required maxlength="100" placeholder="Nom de l'employé"></label>
+      <label>Adresse e-mail<input id="staffEmail" type="email" required placeholder="employe@exemple.com"></label>
+      <label>Mot de passe provisoire<input id="staffPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="Au moins 6 caractères"></label>
+      <label>Rôle<select id="staffRole" required><option value="director">Chef / Directeur</option><option value="storekeeper">Magasinier</option><option value="site_manager">Chef de chantier</option><option value="admin">Administrateur</option></select></label>
+      <div><button class="button primary" id="staffCreateButton" type="submit">Créer le compte</button></div>
+    </form>
+    <p class="muted" style="margin-top:12px">Communiquez le mot de passe provisoire à l'employé de manière privée. Il pourra ensuite le modifier via la procédure de réinitialisation.</p>
+    <p id="staffMessage" class="login-message" role="status"></p>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h3>Personnel enregistré</h3><button class="small-button" data-action="refresh-users">Actualiser</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>État</th><th>Actions</th></tr></thead><tbody id="staffRows"><tr><td colspan="5">Chargement…</td></tr></tbody></table></div>
+  </section>`;
+  $("#staffCreateForm").addEventListener("submit",createStaffAccount);
+  await loadStaffProfiles();
+}
+function roleLabel(role){
+  return ({admin:"Administrateur",director:"Chef / Directeur",storekeeper:"Magasinier",site_manager:"Chef de chantier"})[role]||"Rôle inconnu";
+}
+async function loadStaffProfiles(){
+  const rows=$("#staffRows");
+  if(!rows)return;
+  try{
+    const snap=await window.ksFirebase.db.collection("users").get();
+    userProfiles=snap.docs.map(doc=>({uid:doc.id,...doc.data()}));
+    rows.innerHTML=userProfiles.map(u=>`<tr>
+      <td><strong>${esc(u.displayName||"Sans nom")}</strong></td>
+      <td>${esc(u.email||"—")}</td>
+      <td>${esc(roleLabel(u.role))}</td>
+      <td><span class="tag ${u.active===true?"good":"low"}">${u.active===true?"Actif":"Désactivé"}</span></td>
+      <td><div class="action-group">
+        <button class="small-button" data-action="toggle-user" data-id="${esc(u.uid)}" ${u.uid===window.ksCurrentUser?.uid?"disabled":""}>${u.active===true?"Désactiver":"Activer"}</button>
+        <button class="small-button" data-action="reset-user-password" data-id="${esc(u.uid)}" data-email="${esc(u.email||"")}">Réinitialiser MDP</button>
+      </div></td>
+    </tr>`).join("")||'<tr><td colspan="5" class="empty-state">Aucun profil enregistré.</td></tr>';
+  }catch(error){
+    rows.innerHTML='<tr><td colspan="5" class="empty-state">Impossible de charger les comptes. Vérifiez les règles Firestore.</td></tr>';
+  }
+}
+async function createStaffAccount(event){
+  event.preventDefault();
+  if(window.ksCurrentUser?.role!=="admin"){alert("Action réservée à l’administrateur.");return}
+  const name=$("#staffName").value.trim(),email=$("#staffEmail").value.trim(),password=$("#staffPassword").value,role=$("#staffRole").value;
+  const message=$("#staffMessage"),button=$("#staffCreateButton");
+  if(!name||!email||password.length<6){message.textContent="Vérifiez les informations et utilisez un mot de passe d'au moins 6 caractères.";return}
+  button.disabled=true;button.textContent="Création…";message.textContent="";
+  let secondaryAuth=null,createdUid=null;
+  try{
+    const appName="ks-btp-account-creator";
+    let secondaryApp;
+    try{secondaryApp=firebase.app(appName)}catch(_){secondaryApp=firebase.initializeApp(firebase.app().options,appName)}
+    secondaryAuth=secondaryApp.auth();
+    const credential=await secondaryAuth.createUserWithEmailAndPassword(email,password);
+    createdUid=credential.user.uid;
+    await window.ksFirebase.db.collection("users").doc(createdUid).set({
+      displayName:name,email,role,active:true,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdBy:window.ksCurrentUser.uid
+    });
+    await secondaryAuth.signOut();
+    $("#staffCreateForm").reset();
+    message.style.color="#18744e";
+    message.textContent="Compte créé. L'employé peut maintenant se connecter.";
+    await loadStaffProfiles();
+  }catch(error){
+    if(secondaryAuth){try{await secondaryAuth.signOut()}catch(_){}}
+    message.style.color="#b33d3d";
+    if(createdUid){
+      message.textContent="Le compte d'authentification a été créé, mais son profil n'a pas pu être enregistré. Contactez l'administrateur avant toute nouvelle tentative.";
+    }else{
+      const messages={"auth/email-already-in-use":"Cette adresse e-mail possède déjà un compte.","auth/invalid-email":"Adresse e-mail invalide.","auth/weak-password":"Mot de passe trop faible.","auth/operation-not-allowed":"Activez la connexion par e-mail et mot de passe dans Firebase Authentication."};
+      message.textContent=messages[error.code]||"Création impossible. Vérifiez la connexion et les paramètres Firebase.";
+    }
+  }finally{
+    button.disabled=false;button.textContent="Créer le compte";
+  }
+}
+async function toggleStaffAccount(uid){
+  if(window.ksCurrentUser?.role!=="admin"||uid===window.ksCurrentUser.uid)return;
+  const profile=userProfiles.find(u=>u.uid===uid);if(!profile)return;
+  try{
+    await window.ksFirebase.db.collection("users").doc(uid).update({active:profile.active!==true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await loadStaffProfiles();
+  }catch(error){alert("Impossible de modifier ce compte. Vérifiez les règles Firestore.");}
+}
+async function resetStaffPassword(uid){
+  if(window.ksCurrentUser?.role!=="admin")return;
+  const profile=userProfiles.find(u=>u.uid===uid);
+  if(!profile?.email){alert("Aucune adresse e-mail enregistrée pour ce compte.");return}
+  if(!confirm("Envoyer un lien de réinitialisation à "+profile.email+" ?"))return;
+  try{await window.ksFirebase.auth.sendPasswordResetEmail(profile.email);alert("Lien de réinitialisation envoyé à "+profile.email+".")}
+  catch(error){alert("Envoi impossible. Vérifiez l'adresse e-mail et les paramètres Firebase Authentication.");}
+}
+
 function settingsPage(el){el.innerHTML=`<div class="welcome"><div><h2>Paramètres de l'application</h2><p>Personnalisez les informations de base de KS BTP.</p></div><button class="button primary" data-action="save-settings">Enregistrer</button></div><div class="panel settings-grid"><label>Nom de l'entreprise<input id="companySetting" value="${esc(db.company)}"></label><label>Devise<select id="currencySetting">${["GNF","CFA","EUR","USD"].map(c=>`<option ${db.currency===c?"selected":""}>${c}</option>`).join("")}</select></label><label>Seuil d'alerte par défaut<input id="thresholdSetting" type="number" min="0" value="${db.threshold}"></label><label>Langue de l'interface<select disabled><option>Français</option></select></label></div><div class="notice" style="margin-top:16px">Connexion et profils utilisateurs gérés par Firebase. Attention : les matériels, mouvements et bons restent encore enregistrés uniquement sur cet appareil. La synchronisation cloud et les permissions par chantier seront activées dans la prochaine phase.</div>`}
 function openItem(item){$("#itemForm").reset();$("#itemId").value=item?.id||"";$("#dialogTitle").textContent=item?"Modifier le matériel":"Ajouter un matériel";$("#itemName").value=item?.name||"";$("#itemCategory").value=item?.category||"Maçonnerie";$("#itemType").value=item?.type||"equipment";$("#itemQuantity").value=item?.quantity??0;$("#itemUnit").value=item?.unit||"pièce";$("#itemThreshold").value=item?.threshold??db.threshold;$("#itemLocation").innerHTML='<option value="central">Magasin central</option>'+db.sites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");$("#itemLocation").value=item?.location||"central";$("#itemDialog").showModal()}
 function closeItem(){$("#itemDialog").close()}
 function addMovement(){if(!db.materials.length){alert("Ajoutez d'abord un matériel.");return}const materialId=prompt("ID du matériel :\n"+db.materials.map(m=>m.id+" — "+m.name).join("\n"));const m=db.materials.find(x=>x.id===materialId);if(!m)return;const type=prompt("Type : entrée, sortie, retour ou consommation","sortie");if(!["entrée","sortie","retour","consommation"].includes(type))return;const qty=Number(prompt("Quantité", "1"));if(!Number.isFinite(qty)||qty<=0)return;if((type==="sortie"||type==="consommation")&&qty>Number(m.quantity)){alert("Stock insuffisant.");return}const site=prompt("Chantier ou origine (nom)","Magasin central")||"Non précisé";if(type==="entrée"||type==="retour")m.quantity=Number(m.quantity)+qty;else m.quantity=Number(m.quantity)-qty;db.movements.push({id:id(),date:new Date().toISOString(),type,materialId:m.id,materialName:m.name,quantity:qty,location:site,note:""});save();render()}
 function exportCsv(){const rows=[["Référence","Désignation","Catégorie","Type","Quantité","Unité","Emplacement"],...db.materials.map(m=>[m.ref,m.name,m.category,m.type,m.quantity,m.unit,m.location])];const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\n");download("ks-btp-materiels.csv",csv,"text/csv;charset=utf-8")}
 function download(name,data,type){const a=document.createElement("a"),url=URL.createObjectURL(new Blob([data],{type}));a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
-document.addEventListener("click",e=>{const nav=e.target.closest("[data-page]");if(nav){go(nav.dataset.page);return}const b=e.target.closest("[data-action]");if(!b)return;const act=b.dataset.action,mid=b.dataset.id;if(act==="add-material")openItem();if(act==="edit-material")openItem(db.materials.find(m=>m.id===mid));if(act==="delete-material"&&confirm("Supprimer ce matériel de l'inventaire ?")){db.materials=db.materials.filter(m=>m.id!==mid);save();render()}if(act==="add-site"){const name=prompt("Nom du chantier :");if(name?.trim()){db.sites.push({id:id(),name:name.trim(),manager:prompt("Responsable :")||"",address:prompt("Adresse / zone :")||"",status:"Actif"});save();render()}}if(act==="delete-site"&&confirm("Supprimer ce chantier ?")){db.sites=db.sites.filter(s=>s.id!==mid);save();render()}if(act==="add-movement")addMovement();if(act==="open-voucher")openVoucherForm(b.dataset.type);if(act==="print-voucher"){const d=(db.documents||[]).find(x=>x.id===mid);if(d)printVoucher(d)}if(act==="add-maintenance"){if(!db.materials.length){alert("Ajoutez d'abord un matériel.");return}const materialId=prompt("ID du matériel :\n"+db.materials.map(m=>m.id+" — "+m.name).join("\n"));const m=db.materials.find(x=>x.id===materialId);if(m){db.maintenance.push({id:id(),date:new Date().toISOString(),materialName:m.name,description:prompt("Description de la panne / intervention :")||"",cost:Number(prompt("Coût de l'intervention", "0"))||0,status:"À traiter"});save();render()}}if(act==="export-csv")exportCsv();if(act==="backup")download("ks-btp-sauvegarde.json",JSON.stringify(db,null,2),"application/json");if(act==="save-settings"){db.company=$("#companySetting").value.trim()||"KS BTP";db.currency=$("#currencySetting").value;db.threshold=Number($("#thresholdSetting").value)||0;save();alert("Paramètres enregistrés.");render()}});
+document.addEventListener("click",e=>{const nav=e.target.closest("[data-page]");if(nav){go(nav.dataset.page);return}const b=e.target.closest("[data-action]");if(!b)return;const act=b.dataset.action,mid=b.dataset.id;if(act==="add-material")openItem();if(act==="edit-material")openItem(db.materials.find(m=>m.id===mid));if(act==="delete-material"&&confirm("Supprimer ce matériel de l'inventaire ?")){db.materials=db.materials.filter(m=>m.id!==mid);save();render()}if(act==="add-site"){const name=prompt("Nom du chantier :");if(name?.trim()){db.sites.push({id:id(),name:name.trim(),manager:prompt("Responsable :")||"",address:prompt("Adresse / zone :")||"",status:"Actif"});save();render()}}if(act==="delete-site"&&confirm("Supprimer ce chantier ?")){db.sites=db.sites.filter(s=>s.id!==mid);save();render()}if(act==="add-movement")addMovement();if(act==="open-voucher")openVoucherForm(b.dataset.type);if(act==="print-voucher"){const d=(db.documents||[]).find(x=>x.id===mid);if(d)printVoucher(d)}if(act==="add-maintenance"){if(!db.materials.length){alert("Ajoutez d'abord un matériel.");return}const materialId=prompt("ID du matériel :\n"+db.materials.map(m=>m.id+" — "+m.name).join("\n"));const m=db.materials.find(x=>x.id===materialId);if(m){db.maintenance.push({id:id(),date:new Date().toISOString(),materialName:m.name,description:prompt("Description de la panne / intervention :")||"",cost:Number(prompt("Coût de l'intervention", "0"))||0,status:"À traiter"});save();render()}}if(act==="export-csv")exportCsv();if(act==="backup")download("ks-btp-sauvegarde.json",JSON.stringify(db,null,2),"application/json");if(act==="refresh-users")loadStaffProfiles();if(act==="toggle-user")toggleStaffAccount(mid);if(act==="reset-user-password")resetStaffPassword(mid);if(act==="save-settings"){db.company=$("#companySetting").value.trim()||"KS BTP";db.currency=$("#currencySetting").value;db.threshold=Number($("#thresholdSetting").value)||0;save();alert("Paramètres enregistrés.");render()}});
 $("#voucherForm").addEventListener("submit",submitVoucher);$("#closeVoucher").onclick=closeVoucher;$("#cancelVoucher").onclick=closeVoucher;
 $("#itemForm").addEventListener("submit",e=>{e.preventDefault();const old=db.materials.find(m=>m.id===$("#itemId").value);const data={id:old?.id||id(),ref:old?.ref||"MAT-"+String(db.materials.length+1).padStart(4,"0"),name:$("#itemName").value.trim(),category:$("#itemCategory").value,type:$("#itemType").value,quantity:Number($("#itemQuantity").value),unit:$("#itemUnit").value.trim(),threshold:Number($("#itemThreshold").value)||0,location:$("#itemLocation").value};if(old)Object.assign(old,data);else db.materials.push(data);save();closeItem();render()});
 $("#closeDialog").onclick=closeItem;$("#cancelDialog").onclick=closeItem;$("#menuToggle").onclick=()=>$("#sidebar").classList.toggle("open");
