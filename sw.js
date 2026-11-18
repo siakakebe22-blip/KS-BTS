@@ -1,4 +1,4 @@
-const CACHE="ks-btp-shell-v9";
+const CACHE="ks-btp-shell-v10";
 const ASSETS=["./","./index.html","./style.css","./app.js","./firebase-config.js","./auth.js","./manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));
