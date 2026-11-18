@@ -47,7 +47,6 @@ function openVoucherForm(type){
   $("#receiptLocation").value="Magasin central";
   $("#purchaseSupplier").value="";
   $("#purchaseInvoice").value="";
-  $("#receiptMaterialMode").onchange=()=>{$("#newReceiptMaterialFields").hidden=!!$("#voucherExistingMaterial").value};
   $("#voucherExistingMaterial").onchange=()=>{$("#newReceiptMaterialFields").hidden=!!$("#voucherExistingMaterial").value};
   const total=()=>{$("#purchaseTotal").value=(Number($("#voucherQuantity").value||0)*Number($("#purchaseUnitPrice").value||0)).toLocaleString("fr-FR",{maximumFractionDigits:2})};
   $("#voucherQuantity").oninput=total;$("#purchaseUnitPrice").oninput=total;
