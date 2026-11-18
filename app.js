@@ -1,5 +1,5 @@
 const KEY="ks_btp_v1";
-const CATEGORIES=["Maçonnerie","Électricité","Soudure","Peinture","Plomberie","Autre"];
+const CATEGORIES=["Maçonnerie","Électricité","Soudure","Peinture","Plomberie","Carrelage","Autre"];
 const initial={company:"KS BTP",currency:"GNF",threshold:2,materials:[],sites:[],movements:[],maintenance:[]};
 let db=load();
 let currentPage="dashboard";
