@@ -28,6 +28,7 @@ function openVoucherForm(type){
   const isReceipt=type==="Réception";
   $("#receiptFields").hidden=!isReceipt;
   $("#standardVoucherFields").hidden=isReceipt;
+  $("#standardVoucherExtra").hidden=isReceipt;
   $("#voucherExistingMaterial").innerHTML='<option value="">＋ Nouveau matériel à enregistrer</option>'+db.materials.map(m=>`<option value="${m.id}">${esc(m.ref)} — ${esc(m.name)} (stock : ${m.quantity} ${esc(m.unit)})</option>`).join("");
   $("#voucherMaterial").innerHTML=db.materials.map(m=>`<option value="${m.id}">${esc(m.ref)} — ${esc(m.name)} (stock : ${m.quantity} ${esc(m.unit)})</option>`).join("");
   $("#voucherSite").innerHTML='<option value="Magasin central">Magasin central</option>'+db.sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join("");
