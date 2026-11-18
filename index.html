@@ -51,6 +51,20 @@
       <div class="dialog-actions"><button type="button" class="button secondary" id="cancelDialog">Annuler</button><button type="submit" class="button primary">Enregistrer</button></div>
     </form>
   </dialog>
+  <dialog id="voucherDialog" class="dialog">
+    <form id="voucherForm">
+      <div class="dialog-heading"><div><p class="eyebrow">DOCUMENT DE STOCK</p><h2 id="voucherTitle">Créer un bon</h2></div><button type="button" class="icon-button" id="closeVoucher" aria-label="Fermer">×</button></div>
+      <input type="hidden" id="voucherType">
+      <label>Matériel<select id="voucherMaterial" required></select></label>
+      <div class="form-grid">
+        <label>Quantité<input id="voucherQuantity" type="number" min="0.01" step="0.01" value="1" required></label>
+        <label id="voucherSiteLabel">Chantier / origine<select id="voucherSite" required></select></label>
+      </div>
+      <label>Responsable / bénéficiaire<input id="voucherRecipient" maxlength="100" placeholder="Nom du responsable"></label>
+      <label>Observation<textarea id="voucherNote" rows="3" maxlength="500" placeholder="Détail ou motif du mouvement"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="button secondary" id="cancelVoucher">Annuler</button><button type="submit" class="button primary">Valider et imprimer le bon</button></div>
+    </form>
+  </dialog>
   <script src="app.js"></script>
 </body>
 </html>
