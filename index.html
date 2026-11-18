@@ -56,7 +56,7 @@
       <div class="dialog-heading"><div><p class="eyebrow">DOCUMENT DE STOCK</p><h2 id="voucherTitle">Créer un bon</h2></div><button type="button" class="icon-button" id="closeVoucher" aria-label="Fermer">×</button></div>
       <input type="hidden" id="voucherType">
       <div id="standardVoucherFields">
-        <label>Matériel<select id="voucherMaterial" required></select></label>
+        <label>Matériel<select id="voucherMaterial"></select></label>
       </div>
       <div id="receiptFields" hidden>
         <label>Matériel à réceptionner<select id="voucherExistingMaterial"><option value="">＋ Nouveau matériel à enregistrer</option></select></label>
@@ -66,7 +66,7 @@
           <div class="form-grid">
             <label>Catégorie<select id="receiptCategory"><option>Maçonnerie</option><option>Électricité</option><option>Soudure</option><option>Peinture</option><option>Plomberie</option><option>Carrelage</option><option>Autre</option></select></label>
             <label>Type<select id="receiptType"><option value="equipment">Équipement réutilisable</option><option value="consumable">Consommable</option></select></label>
-            <label>Unité<input id="receiptUnit" value="pièce" required></label>
+            <label>Unité<input id="receiptUnit" value="pièce"></label>
             <label>Seuil minimum<input id="receiptThreshold" type="number" min="0" value="2"></label>
           </div>
         </div>
@@ -74,7 +74,7 @@
           <h3>Informations d'achat et de stockage</h3>
           <div class="form-grid">
             
-            <label>Date d'achat<input id="purchaseDate" type="date" required></label>
+            <label>Date d'achat<input id="purchaseDate" type="date"></label>
             <label>Fournisseur<input id="purchaseSupplier" maxlength="120" placeholder="Nom du fournisseur"></label>
             <label>Référence facture / reçu<input id="purchaseInvoice" maxlength="80" placeholder="N° facture"></label>
             <label>Prix d'achat unitaire<input id="purchaseUnitPrice" type="number" min="0" step="0.01" value="0"></label>
