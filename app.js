@@ -20,31 +20,70 @@ function drawMaterials(){const q=($("#materialSearch")?.value||"").toLowerCase()
 function sitesPage(el){el.innerHTML=`<div class="welcome"><div><h2>Chantiers</h2><p>Enregistrez les lieux de stockage et de consommation.</p></div><button class="button primary" data-action="add-site">＋ Ajouter un chantier</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Chantier</th><th>Responsable</th><th>Adresse / zone</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${db.sites.map(s=>`<tr><td><strong>${esc(s.name)}</strong></td><td>${esc(s.manager||"—")}</td><td>${esc(s.address||"—")}</td><td><span class="tag">${esc(s.status)}</span></td><td><button class="small-button" data-action="delete-site" data-id="${s.id}">Supprimer</button></td></tr>`).join("")||'<tr><td colspan="5" class="empty-state">Aucun chantier enregistré.</td></tr>'}</tbody></table></div></div>`}
 function movementsPage(el){el.innerHTML=`<div class="welcome"><div><h2>Suivi des mouvements</h2><p>Enregistrez les entrées, sorties, transferts et consommations.</p></div><button class="button primary" data-action="add-movement">＋ Nouveau mouvement</button></div><div class="notice">Chaque mouvement enregistré modifie le stock local. Vérifiez le matériel, la quantité et le chantier avant validation. Cette première version ne gère pas encore les validations multi-utilisateurs.</div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Matériel</th><th>Quantité</th><th>Destination / origine</th><th>Note</th></tr></thead><tbody>${db.movements.slice().reverse().map(m=>`<tr><td>${date(m.date)}</td><td>${esc(m.type)}</td><td>${esc(m.materialName)}</td><td>${m.quantity}</td><td>${esc(m.location)}</td><td>${esc(m.note||"—")}</td></tr>`).join("")||'<tr><td colspan="6" class="empty-state">Aucun mouvement enregistré.</td></tr>'}</tbody></table></div>`}
 function documentsPage(el){const docs=(db.documents||[]).slice().reverse();el.innerHTML=`<div class="welcome"><div><h2>Bons de stock</h2><p>Créer, imprimer et conserver les documents de circulation des matériels.</p></div></div><div class="stats-grid"><article class="stat-card"><div class="stat-label">Bons de sortie</div><div class="stat-value">${docs.filter(d=>d.type==="Sortie").length}</div></article><article class="stat-card"><div class="stat-label">Bons de réception</div><div class="stat-value">${docs.filter(d=>d.type==="Réception").length}</div></article><article class="stat-card"><div class="stat-label">Bons de retour</div><div class="stat-value">${docs.filter(d=>d.type==="Retour").length}</div></article><article class="stat-card"><div class="stat-label">Total des documents</div><div class="stat-value">${docs.length}</div></article></div><div class="panel"><h3>Créer un nouveau document</h3><div class="quick-actions"><button class="button primary" data-action="open-voucher" data-type="Sortie">＋ Bon de sortie</button><button class="button secondary" data-action="open-voucher" data-type="Réception">＋ Bon de réception</button><button class="button secondary" data-action="open-voucher" data-type="Retour">＋ Bon de retour</button></div></div><div class="panel" style="margin-top:16px"><h3>Historique des bons</h3><div class="table-wrap"><table><thead><tr><th>Référence</th><th>Date</th><th>Type</th><th>Matériel</th><th>Quantité</th><th>Chantier</th><th>Document</th></tr></thead><tbody>${docs.map(d=>`<tr><td><strong>${esc(d.ref)}</strong></td><td>${date(d.date)}</td><td>${esc(d.type)}</td><td>${esc(d.materialName)}</td><td>${d.quantity} ${esc(d.unit)}</td><td>${esc(d.site)}</td><td><button class="small-button" data-action="print-voucher" data-id="${d.id}">Imprimer</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty-state">Aucun bon enregistré.</td></tr>'}</tbody></table></div></div>`}
-function printVoucher(d){const w=window.open("","_blank");if(!w){alert("Autorisez les fenêtres contextuelles pour imprimer le bon.");return}w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(d.ref)}</title><style>body{font:14px Arial,sans-serif;margin:40px;color:#172334}h1{text-align:center;color:#14243a}h2{text-align:center;color:#ef8b2c}table{width:100%;border-collapse:collapse;margin:28px 0}td,th{border:1px solid #888;padding:12px;text-align:left}.sign{display:flex;justify-content:space-between;margin-top:80px}.sign div{width:40%;border-top:1px solid #333;padding-top:10px;text-align:center}.meta{margin-top:25px;line-height:2}</style></head><body><h1>${esc(db.company||"KS BTP")}</h1><h2>BON DE ${esc(d.type.toUpperCase())}</h2><p style="text-align:center"><strong>${esc(d.ref)}</strong></p><div class="meta">Date : ${date(d.date)}<br>Chantier : ${esc(d.site)}<br>Responsable / bénéficiaire : ${esc(d.recipient||"—")}</div><table><thead><tr><th>Référence matériel</th><th>Désignation</th><th>Catégorie</th><th>Quantité</th><th>Unité</th></tr></thead><tbody><tr><td>${esc(d.materialRef)}</td><td>${esc(d.materialName)}</td><td>${esc(d.category)}</td><td>${d.quantity}</td><td>${esc(d.unit)}</td></tr></tbody></table><p>Observation : ${esc(d.note||"—")}</p><div class="sign"><div>Magasinier<br><br>Signature</div><div>Responsable chantier / bénéficiaire<br><br>Signature</div></div><script>window.onload=()=>window.print()</script></body></html>`);w.document.close()}
+function printVoucher(d){const w=window.open("","_blank");if(!w){alert("Autorisez les fenêtres contextuelles pour imprimer le bon.");return}w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(d.ref)}</title><style>body{font:14px Arial,sans-serif;margin:40px;color:#172334}h1{text-align:center;color:#14243a}h2{text-align:center;color:#ef8b2c}table{width:100%;border-collapse:collapse;margin:28px 0}td,th{border:1px solid #888;padding:12px;text-align:left}.sign{display:flex;justify-content:space-between;margin-top:80px}.sign div{width:40%;border-top:1px solid #333;padding-top:10px;text-align:center}.meta{margin-top:25px;line-height:2}</style></head><body><h1>${esc(db.company||"KS BTP")}</h1><h2>BON DE ${esc(d.type.toUpperCase())}</h2><p style="text-align:center"><strong>${esc(d.ref)}</strong></p><div class="meta">Date : ${date(d.date)}<br>Chantier : ${esc(d.site)}<br>Responsable / bénéficiaire : ${esc(d.recipient||"—")}</div><table><thead><tr><th>Référence matériel</th><th>Désignation</th><th>Catégorie</th><th>Quantité</th><th>Unité</th></tr></thead><tbody><tr><td>${esc(d.materialRef)}</td><td>${esc(d.materialName)}</td><td>${esc(d.category)}</td><td>${d.quantity}</td><td>${esc(d.unit)}</td></tr></tbody></table><p>Observation : ${esc(d.note||"—")}</p>${d.purchase?`<p>Fournisseur : ${esc(d.purchase.supplier||"—")}<br>Date d’achat : ${esc(d.purchase.date)}<br>Facture : ${esc(d.purchase.invoice||"—")}<br>Prix unitaire : ${d.purchase.unitPrice} ${esc(d.purchase.currency)}<br>Montant total : ${d.purchase.total} ${esc(d.purchase.currency)}<br>Stockage : ${esc(d.purchase.storage)}</p>`:""}<div class="sign"><div>Magasinier<br><br>Signature</div><div>Responsable chantier / bénéficiaire<br><br>Signature</div></div><script>window.onload=()=>window.print()</script></body></html>`);w.document.close()}
 function openVoucherForm(type){
-  if(!db.materials.length){alert("Ajoutez d'abord un matériel dans l'inventaire.");return}
   $("#voucherForm").reset();
   $("#voucherType").value=type;
   $("#voucherTitle").textContent="Créer un bon de "+type.toLowerCase();
+  const isReceipt=type==="Réception";
+  $("#receiptFields").hidden=!isReceipt;
+  $("#standardVoucherFields").hidden=isReceipt;
+  $("#voucherExistingMaterial").innerHTML='<option value="">＋ Nouveau matériel à enregistrer</option>'+db.materials.map(m=>`<option value="${m.id}">${esc(m.ref)} — ${esc(m.name)} (stock : ${m.quantity} ${esc(m.unit)})</option>`).join("");
   $("#voucherMaterial").innerHTML=db.materials.map(m=>`<option value="${m.id}">${esc(m.ref)} — ${esc(m.name)} (stock : ${m.quantity} ${esc(m.unit)})</option>`).join("");
   $("#voucherSite").innerHTML='<option value="Magasin central">Magasin central</option>'+db.sites.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join("");
   $("#voucherQuantity").value=1;
-  $("#voucherQuantity").max=type==="Sortie"?Number(db.materials[0].quantity):"";
-  $("#voucherSiteLabel").textContent=type==="Sortie"?"Chantier destinataire":type==="Réception"?"Origine / fournisseur":"Chantier d'origine";
+  $("#voucherQuantity").max=type==="Sortie"?Number(db.materials[0]?.quantity||0):"";
+  $("#voucherSiteLabel").textContent=type==="Sortie"?"Chantier destinataire":"Chantier d'origine";
+  $("#purchaseDate").value=new Date().toISOString().slice(0,10);
+  $("#purchaseUnitPrice").value="";
+  $("#purchaseTotal").value="";
+  $("#voucherExistingMaterial").value="";
+  $("#receiptMaterialName").value="";
+  $("#receiptCategory").value="Maçonnerie";
+  $("#receiptType").value="equipment";
+  $("#receiptUnit").value="pièce";
+  $("#receiptThreshold").value=db.threshold;
+  $("#receiptLocation").value="Magasin central";
+  $("#purchaseSupplier").value="";
+  $("#purchaseInvoice").value="";
+  $("#receiptMaterialMode").onchange=()=>{$("#newReceiptMaterialFields").hidden=!!$("#voucherExistingMaterial").value};
+  $("#voucherExistingMaterial").onchange=()=>{$("#newReceiptMaterialFields").hidden=!!$("#voucherExistingMaterial").value};
+  const total=()=>{$("#purchaseTotal").value=(Number($("#voucherQuantity").value||0)*Number($("#purchaseUnitPrice").value||0)).toLocaleString("fr-FR",{maximumFractionDigits:2})};
+  $("#voucherQuantity").oninput=total;$("#purchaseUnitPrice").oninput=total;
   $("#voucherDialog").showModal();
 }
 function closeVoucher(){ $("#voucherDialog").close() }
 function submitVoucher(e){
   e.preventDefault();
-  const type=$("#voucherType").value,m=db.materials.find(x=>x.id===$("#voucherMaterial").value);
-  const quantity=Number($("#voucherQuantity").value);
-  if(!m||!Number.isFinite(quantity)||quantity<=0){alert("Vérifiez le matériel et la quantité.");return}
-  if(type==="Sortie"&&quantity>Number(m.quantity)){alert("Stock insuffisant : bon non créé.");return}
-  if(type==="Sortie")m.quantity=Number(m.quantity)-quantity;else m.quantity=Number(m.quantity)+quantity;
+  const type=$("#voucherType").value,quantity=Number($("#voucherQuantity").value);
+  if(!Number.isFinite(quantity)||quantity<=0){alert("Saisissez une quantité valide.");return}
+  let m=null,purchase=null;
+  if(type==="Réception"){
+    const existingId=$("#voucherExistingMaterial").value;
+    if(existingId){m=db.materials.find(x=>x.id===existingId)}
+    else{
+      const name=$("#receiptMaterialName").value.trim();
+      if(!name){alert("Indiquez la désignation du matériel.");return}
+      m={id:id(),ref:"MAT-"+String(db.materials.length+1).padStart(4,"0"),name,category:$("#receiptCategory").value,type:$("#receiptType").value,quantity:0,unit:$("#receiptUnit").value.trim()||"pièce",threshold:Number($("#receiptThreshold").value)||0,location:"central",purchaseHistory:[]};
+      db.materials.push(m);
+    }
+    const unitPrice=Number($("#purchaseUnitPrice").value||0);
+    purchase={id:id(),date:$("#purchaseDate").value||new Date().toISOString().slice(0,10),supplier:$("#purchaseSupplier").value.trim(),invoice:$("#purchaseInvoice").value.trim(),quantity,unitPrice,total:quantity*unitPrice,currency:db.currency,storage:$("#receiptLocation").value};
+    m.quantity=Number(m.quantity||0)+quantity;
+    m.location="central";
+    m.purchaseHistory=m.purchaseHistory||[];m.purchaseHistory.push(purchase);
+    db.purchases=db.purchases||[];db.purchases.push({...purchase,materialId:m.id,materialName:m.name,materialRef:m.ref,category:m.category});
+  }else{
+    m=db.materials.find(x=>x.id===$("#voucherMaterial").value);
+    if(!m){alert("Choisissez un matériel.");return}
+    if(type==="Sortie"&&quantity>Number(m.quantity)){alert("Stock insuffisant : bon non créé.");return}
+    if(type==="Sortie")m.quantity=Number(m.quantity)-quantity;else m.quantity=Number(m.quantity)+quantity;
+  }
   db.documents=db.documents||[];
-  const d={id:id(),ref:"BON-"+type.toUpperCase().slice(0,3)+"-"+String(db.documents.length+1).padStart(4,"0"),date:new Date().toISOString(),type,materialId:m.id,materialRef:m.ref,materialName:m.name,category:m.category,quantity,unit:m.unit,site:$("#voucherSite").value,recipient:$("#voucherRecipient").value.trim(),note:$("#voucherNote").value.trim()};
+  const d={id:id(),ref:"BON-"+type.toUpperCase().slice(0,3)+"-"+String(db.documents.length+1).padStart(4,"0"),date:new Date().toISOString(),type,materialId:m.id,materialRef:m.ref,materialName:m.name,category:m.category,quantity,unit:m.unit,site:type==="Réception"?$("#receiptLocation").value:$("#voucherSite").value,recipient:$("#voucherRecipient").value.trim(),note:$("#voucherNote").value.trim(),purchase};
+  if(type==="Réception"){d.supplier=purchase.supplier;d.invoice=purchase.invoice;d.purchaseDate=purchase.date;d.unitPrice=purchase.unitPrice;d.totalPurchase=purchase.total}
   db.documents.push(d);
-  db.movements.push({id:id(),date:d.date,type:type.toLowerCase(),materialId:m.id,materialName:m.name,quantity,location:d.site,note:"Document "+d.ref});
+  db.movements.push({id:id(),date:d.date,type:type.toLowerCase(),materialId:m.id,materialName:m.name,quantity,location:d.site,note:"Document "+d.ref+(purchase?" · Fournisseur : "+purchase.supplier:"")});
   save();closeVoucher();render();printVoucher(d);
 }
 function maintenancePage(el){el.innerHTML=`<div class="welcome"><div><h2>Maintenance et réparations</h2><p>Consignez les pannes, interventions et coûts de réparation.</p></div><button class="button primary" data-action="add-maintenance">＋ Déclarer une intervention</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Matériel</th><th>Problème / intervention</th><th>Coût</th><th>Statut</th></tr></thead><tbody>${db.maintenance.slice().reverse().map(m=>`<tr><td>${date(m.date)}</td><td>${esc(m.materialName)}</td><td>${esc(m.description)}</td><td>${money(m.cost)}</td><td><span class="tag">${esc(m.status)}</span></td></tr>`).join("")||'<tr><td colspan="5" class="empty-state">Aucune intervention enregistrée.</td></tr>'}</tbody></table></div>`}
