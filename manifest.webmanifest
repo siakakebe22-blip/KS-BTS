@@ -1,0 +1,11 @@
+{
+  "name": "KS BTP — Gestion des matériels",
+  "short_name": "KS BTP",
+  "description": "Gestion des matériels et équipements de chantier",
+  "lang": "fr",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#14243a",
+  "icons": []
+}
